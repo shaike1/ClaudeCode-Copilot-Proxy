@@ -254,9 +254,15 @@ export async function makeAnthropicCompletionRequest(
     }
     // Copilot API ignores tool_choice=required — inject a system instruction instead
     // so the model actually calls a tool when forced tool use is requested.
+    // Also inject a softer hint when tool_choice is auto/undefined to encourage tool use.
+    const toolNames = tools.map((t) => t.name).join(', ');
+    let forceMsg: string;
     if (isToolChoiceAny) {
-      const toolNames = tools.map((t) => t.name).join(', ');
-      const forceMsg = `You MUST call one of the available tools (${toolNames}) to respond. Do not reply in plain text.`;
+      forceMsg = `You MUST call one of the available tools (${toolNames}) to respond. Do not reply in plain text.`;
+    } else {
+      forceMsg = `When the user asks you to check something, run a command, perform an action, or retrieve information — use the available tools (${toolNames}) instead of replying with plain text. Do NOT say "I'll check" or "I will look into it" without immediately calling a tool.`;
+    }
+    {
       const msgs = openaiMessages as Array<Record<string, unknown>>;
       const sysIdx = msgs.findIndex((m) => m.role === 'system');
       if (sysIdx >= 0) {
@@ -265,7 +271,7 @@ export async function makeAnthropicCompletionRequest(
         msgs.unshift({ role: 'system', content: forceMsg });
       }
     }
-    logger.info(`Forwarding ${tools.length} tool(s) to Copilot: ${tools.map((t) => t.name).join(', ')}`);
+    logger.info(`Forwarding ${tools.length} tool(s) to Copilot: ${tools.map((t) => t.name).join(', ')} [tool_choice=${JSON.stringify(tool_choice)}]`);
   }
 
   try {
@@ -348,6 +354,8 @@ function convertOpenAIToAnthropicResponse(
   let stopReason: AnthropicMessageResponse['stop_reason'] = 'end_turn';
   if (finishReason === 'length') stopReason = 'max_tokens';
   else if (finishReason === 'tool_calls' && content.some((b) => b.type === 'tool_use')) stopReason = 'tool_use';
+
+  logger.info(`Response: finish_reason=${finishReason} stop_reason=${stopReason} content_blocks=${content.length} has_tool_use=${content.some((b) => b.type === 'tool_use')}`);
 
   return {
     id: `msg_${uuidv4().replace(/-/g, '').substring(0, 24)}`,
