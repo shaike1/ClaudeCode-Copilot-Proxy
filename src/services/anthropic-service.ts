@@ -331,7 +331,7 @@ function convertOpenAIToAnthropicResponse(
   const finishReason = firstChoice.finish_reason;
   let stopReason: AnthropicMessageResponse['stop_reason'] = 'end_turn';
   if (finishReason === 'length') stopReason = 'max_tokens';
-  else if (finishReason === 'tool_calls') stopReason = 'tool_use';
+  else if (finishReason === 'tool_calls' && content.some((b) => b.type === 'tool_use')) stopReason = 'tool_use';
 
   return {
     id: `msg_${uuidv4().replace(/-/g, '').substring(0, 24)}`,
