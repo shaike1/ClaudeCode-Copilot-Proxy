@@ -158,19 +158,20 @@ Then just run `claude`.
 }
 ```
 
-**3. Set as default model in `~/.openclaw/openclaw.json`:**
+**3. Set as default model — one command:**
 
-```json
-{
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "copilot-proxy/claude-sonnet-4-5"
-      }
-    }
-  }
-}
+```bash
+openclaw models set copilot-proxy/claude-sonnet-4-5
 ```
+
+**4. Verify:**
+
+```bash
+openclaw models status
+```
+
+> **Note**: Steps 1 and 2 (registering the provider + dummy auth profile) must be done by editing
+> the JSON files once. After that, all model switching is done via `openclaw models set <model>`.
 
 ## 🤖 Configuration with Claude Code
 
