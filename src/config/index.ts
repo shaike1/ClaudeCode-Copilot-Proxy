@@ -43,6 +43,15 @@ const ANTHROPIC_API_ENDPOINTS = {
 // Claude model mappings: Claude Code model names -> Copilot model names
 // Uses prefix matching, so 'claude-opus-4-5' matches 'claude-opus-4-5-20251001' etc.
 export const CLAUDE_MODEL_MAPPINGS: Record<string, string> = {
+  // Claude Opus 4.6 -> fallback to 4.5 (latest available in Copilot)
+  'claude-opus-4-6': 'claude-opus-4.5',
+
+  // Claude Sonnet 4.6 -> fallback to 4.5
+  'claude-sonnet-4-6': 'claude-sonnet-4.5',
+
+  // Claude Haiku 4.6 -> fallback to 4.5
+  'claude-haiku-4-6': 'claude-haiku-4.5',
+
   // Claude Opus 4.5
   'claude-opus-4-5': 'claude-opus-4.5',
   'opus': 'claude-opus-4.5',
