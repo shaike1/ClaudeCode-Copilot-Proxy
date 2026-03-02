@@ -18,6 +18,8 @@ A proxy server that enables **Claude Code** and **Cursor IDE** to use GitHub Cop
 - **Seamless Authentication**: Handles GitHub OAuth device flow authentication
 - **Token Management**: Automatically refreshes Copilot tokens
 - **Streaming Support**: Supports both streaming and non-streaming completions
+- **Tool Use / Function Calling**: Full support for Anthropic tool_use ↔ OpenAI function_calls conversion
+- **Docker Support**: Run as a container with `docker compose up -d`
 - **Easy Configuration**: Simple setup with Claude Code or Cursor IDE
 
 ## 📋 Prerequisites
@@ -59,6 +61,41 @@ That's it! The server will start at http://localhost:3000
    ```bash
    npm start
    ```
+
+
+### Option C: Docker (Self-Hosted / Server)
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/shaike1/ClaudeCode-Copilot-Proxy.git
+   cd ClaudeCode-Copilot-Proxy
+   ```
+
+2. Build and start with Docker Compose:
+   ```bash
+   docker compose up -d --build
+   ```
+
+   The proxy will be available at **http://localhost:3002** (host port 3002 → container port 3000).
+
+3. Authenticate by opening http://localhost:3002 in your browser and completing the GitHub OAuth flow.
+
+4. Auth tokens are persisted in the `copilot-tokens` Docker volume — they survive container restarts.
+
+**Rebuild after code changes:**
+```bash
+docker compose build --no-cache && docker compose up -d --force-recreate
+```
+
+**Other useful commands:**
+```bash
+docker compose logs -f          # tail logs
+docker compose restart proxy    # restart without rebuild
+docker compose down             # stop
+```
+
+> **Tip for remote servers**: If the proxy runs on a remote host (e.g. `100.64.0.7:3002`), set
+> `ANTHROPIC_BASE_URL=http://100.64.0.7:3002` in your Claude Code settings.
 
 ## 🤖 Configuration with Claude Code
 
@@ -162,6 +199,32 @@ Once configured, you can use Cursor IDE as normal. All AI-powered features will 
 To switch back to Cursor's API:
 1. Go to Settings > API Keys
 2. Remove the Override OpenAI Base URL
+
+
+## 🔧 Tool Use / Function Calling
+
+This fork adds full **tool use support** — the original proxy stripped `tools` from requests before forwarding to GitHub Copilot.
+
+GitHub Copilot's Chat API (`api.githubcopilot.com/chat/completions`) is OpenAI-compatible and supports function calling. The proxy now converts between formats automatically:
+
+| Direction | Conversion |
+|-----------|-----------|
+| Request | Anthropic `tools` → OpenAI `{type: "function", function: {name, description, parameters}}` |
+| Request | Anthropic `tool_use` content blocks → OpenAI `tool_calls` in assistant message |
+| Request | Anthropic `tool_result` content blocks → OpenAI `tool` role messages |
+| Response | OpenAI `tool_calls` → Anthropic `tool_use` content blocks |
+| Response | `finish_reason: "tool_calls"` → `stop_reason: "tool_use"` |
+
+**`tool_choice` mapping:**
+
+| Anthropic | OpenAI |
+|-----------|--------|
+| `"auto"` | `"auto"` |
+| `"any"` | `"required"` |
+| `"none"` | `"none"` |
+| `{type: "tool", name: "X"}` | `{type: "function", function: {name: "X"}}` |
+
+This makes the proxy fully compatible with agents that rely on tools (e.g. OpenClaw `exec` tool, Claude Code built-in tools).
 
 ## 🤔 How It Works
 
