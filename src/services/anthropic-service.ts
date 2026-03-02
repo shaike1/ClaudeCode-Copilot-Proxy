@@ -241,12 +241,28 @@ export async function makeAnthropicCompletionRequest(
   if (tools && tools.length > 0) {
     body.tools = convertToolsToOpenAI(tools);
     // Map Anthropic tool_choice to OpenAI format
+    const isToolChoiceAny =
+      tool_choice === 'any' ||
+      (typeof tool_choice === 'object' && tool_choice !== null && (tool_choice as { type?: string }).type === 'any');
     if (tool_choice) {
-      if (tool_choice === 'auto') body.tool_choice = 'auto';
-      else if (tool_choice === 'any') body.tool_choice = 'required';
-      else if (tool_choice === 'none') body.tool_choice = 'none';
-      else if (typeof tool_choice === 'object' && tool_choice.type === 'tool') {
-        body.tool_choice = { type: 'function', function: { name: tool_choice.name } };
+      if (tool_choice === 'auto' || (typeof tool_choice === 'object' && (tool_choice as { type?: string }).type === 'auto')) body.tool_choice = 'auto';
+      else if (isToolChoiceAny) body.tool_choice = 'required';
+      else if (tool_choice === 'none' || (typeof tool_choice === 'object' && (tool_choice as { type?: string }).type === 'none')) body.tool_choice = 'none';
+      else if (typeof tool_choice === 'object' && (tool_choice as { type?: string }).type === 'tool') {
+        body.tool_choice = { type: 'function', function: { name: (tool_choice as { name: string }).name } };
+      }
+    }
+    // Copilot API ignores tool_choice=required — inject a system instruction instead
+    // so the model actually calls a tool when forced tool use is requested.
+    if (isToolChoiceAny) {
+      const toolNames = tools.map((t) => t.name).join(', ');
+      const forceMsg = `You MUST call one of the available tools (${toolNames}) to respond. Do not reply in plain text.`;
+      const msgs = openaiMessages as Array<Record<string, unknown>>;
+      const sysIdx = msgs.findIndex((m) => m.role === 'system');
+      if (sysIdx >= 0) {
+        msgs[sysIdx] = { ...msgs[sysIdx], content: `${msgs[sysIdx].content}\n\n${forceMsg}` };
+      } else {
+        msgs.unshift({ role: 'system', content: forceMsg });
       }
     }
     logger.info(`Forwarding ${tools.length} tool(s) to Copilot: ${tools.map((t) => t.name).join(', ')}`);

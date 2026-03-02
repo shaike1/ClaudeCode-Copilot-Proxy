@@ -1,7 +1,45 @@
 {
   "permissions": {
     "allow": [
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(docker compose up --build 2>&1)",
+      "Bash(lsof -ti:3000 | xargs kill -9 2>/dev/null; echo \"killed\")",
+      "Bash(docker compose up 2>&1)",
+      "Bash(sleep 5 && curl -s http://localhost:3000/health)",
+      "Bash(lsof -ti:3000 && docker ps)",
+      "Bash(kill -9 618340 && sleep 1 && docker compose up -d 2>&1)",
+      "Bash(ss -tlnp sport = :3000 && fuser 3000/tcp)",
+      "Bash(systemctl list-units --type=service --state=running | grep -i node 2>/dev/null; pm2 list 2>/dev/null; pgrep -a node)",
+      "Bash(ss -tlnp 'sport = :3001')",
+      "Bash(docker compose up -d 2>&1 && sleep 3 && curl -s http://localhost:3002/health)",
+      "Bash(docker ps --filter name=copilot-proxy --format \"table {{.Names}}\\\\t{{.Status}}\\\\t{{.Ports}}\")",
+      "Bash(docker ps --filter name=copilot-proxy --format \"table {{.Names}}\\\\t{{.Status}}\\\\t{{.Ports}}\" && curl -s http://localhost:3002/health)",
+      "Bash(curl -s http://localhost:3002/auth/status)",
+      "Bash(curl -s -X POST http://localhost:3002/v1/messages \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -H \"x-api-key: sk-dummy\" \\\\\n  -H \"anthropic-version: 2023-06-01\" \\\\\n  -d '{\n    \"model\": \"claude-sonnet-4-5\",\n    \"max_tokens\": 64,\n    \"messages\": [{\"role\": \"user\", \"content\": \"Reply with just: proxy works\"}]\n  }' 2>&1)",
+      "Bash(ANTHROPIC_BASE_URL=http://localhost:3002 ANTHROPIC_AUTH_TOKEN=sk-dummy claude -p \"say: proxy test success\" --output-format text 2>&1)",
+      "Bash(CLAUDECODE=\"\" ANTHROPIC_BASE_URL=http://localhost:3002 ANTHROPIC_AUTH_TOKEN=sk-dummy claude -p \"say: proxy test success\" --output-format text 2>&1)",
+      "Bash(docker compose build 2>&1 | tail -5 && docker compose up -d 2>&1)",
+      "Bash(sleep 3 && curl -s -X POST http://localhost:3002/v1/messages \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -H \"x-api-key: sk-dummy\" \\\\\n  -H \"anthropic-version: 2023-06-01\" \\\\\n  -d '{\n    \"model\": \"claude-sonnet-4-6\",\n    \"max_tokens\": 32,\n    \"messages\": [{\"role\": \"user\", \"content\": \"say: proxy works\"}]\n  }' 2>&1)",
+      "Bash(CLAUDECODE=\"\" ANTHROPIC_BASE_URL=http://localhost:3002 ANTHROPIC_AUTH_TOKEN=sk-dummy claude -p \"say exactly: it works via copilot proxy\" --output-format text 2>&1)",
+      "Bash(find /root/clawd -name \"*.env\" -o -name \".env*\" 2>/dev/null | grep -v node_modules | head -10)",
+      "Bash(find /root -maxdepth 5 -name \"docker-compose*\" 2>/dev/null | xargs grep -l \"ANTHROPIC\\\\|claude\\\\|api.key\" 2>/dev/null | grep -v node_modules | grep -v \".git\")",
+      "Bash(ls /root/openclaw-3cx/.env* 2>/dev/null && cat /root/openclaw-3cx/.env 2>/dev/null | grep -v \"sk-ant\" | head -20)",
+      "Bash(docker inspect claude-api-server --format '{{.Config.Image}}' && docker exec claude-api-server cat /app/package.json 2>/dev/null | python3 -m json.tool 2>/dev/null | grep -E '\"name\"|\"version\"|\"main\"')",
+      "Bash(docker exec claude-api-server cat /app/server.js 2>/dev/null | head -60)",
+      "Bash(cat ~/.openclaw/openclaw.json 2>/dev/null | python3 -m json.tool 2>/dev/null | grep -i \"anthropic\\\\|api.key\\\\|token\\\\|model\\\\|provider\" | sed 's/sk-ant-[^ \"]*/sk-ant-REDACTED/g' | head -20)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json, sys\ndata = json.load\\(sys.stdin\\)\n# Find the active provider config\nproviders = data.get\\('completions', {}\\).get\\('providers', {}\\)\nfor name, cfg in providers.items\\(\\):\n    if 'anthropic' in name.lower\\(\\):\n        safe = {k: \\('sk-ant-REDACTED' if 'sk-ant' in str\\(v\\) else v\\) for k, v in cfg.items\\(\\)}\n        print\\(f'{name}: {json.dumps\\(safe, indent=2\\)}'\\)\n\" 2>/dev/null)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json, sys\ndata = json.load\\(sys.stdin\\)\ndef find_keys\\(obj, path=''\\):\n    if isinstance\\(obj, dict\\):\n        for k, v in obj.items\\(\\):\n            find_keys\\(v, f'{path}.{k}'\\)\n    elif isinstance\\(obj, str\\) and \\('token' in path.lower\\(\\) or 'key' in path.lower\\(\\) or 'anthropic' in path.lower\\(\\)\\):\n        val = 'sk-ant-REDACTED' if 'sk-ant' in v else v[:60]\n        print\\(f'{path} = {val}'\\)\nfind_keys\\(data\\)\n\" 2>/dev/null | head -30)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\nprint\\(json.dumps\\(d.get\\('completions',{}\\), indent=2\\)\\)\n\" 2>/dev/null | sed 's/sk-ant-[^ \"]*/sk-ant-REDACTED/g' | head -60)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\nauth = d.get\\('auth',{}\\)\nmodels = d.get\\('models',{}\\)\nprint\\('=== AUTH ==='\\)\nprint\\(json.dumps\\(auth, indent=2\\)\\)\nprint\\('=== MODELS \\(providers\\) ==='\\)\nprint\\(json.dumps\\(models.get\\('providers',{}\\), indent=2\\)\\)\n\" 2>/dev/null | sed 's/sk-ant-[^ \"]*/sk-ant-REDACTED/g' | head -80)",
+      "Bash(ls ~/.openclaw/credentials/ && echo \"---\" && for f in ~/.openclaw/credentials/*; do echo \"=== $f ===\"; cat \"$f\" | sed 's/sk-ant-[^ \"]*/sk-ant-REDACTED/g' | python3 -m json.tool 2>/dev/null | head -10; done)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\n# Show full auth section including any token values\nauth = d.get\\('auth',{}\\)\nprofiles = auth.get\\('profiles',{}\\)\nfor name, p in profiles.items\\(\\):\n    if 'token' in p or 'apiKey' in p or 'key' in p:\n        safe = json.dumps\\(p\\)\n        safe = safe.replace\n        print\\(f'{name}: has token/key'\\)\n    else:\n        print\\(f'{name}: {json.dumps\\(p\\)}'\\)\n# Also check active profile\nprint\\('active:', auth.get\\('active', auth.get\\('profile', 'NOT SET'\\)\\)\\)\n\" 2>/dev/null)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\n# Show models active config\nm=d.get\\('models',{}\\)\nprint\\('active model:', m.get\\('model', m.get\\('active',{}\\)\\)\\)\nprint\\('active provider keys:', list\\(m.keys\\(\\)\\)\\)\n\" 2>/dev/null)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\nm=d.get\\('models',{}\\)\nprint\\(json.dumps\\(m, indent=2\\)\\)\n\" 2>/dev/null | sed 's/sk-ant-[^ \"]*/sk-ant-REDACTED/g' | tail -40)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\nm=d.get\\('models',{}\\)\nprint\\('mode:', m.get\\('mode'\\)\\)\nprint\\('providers keys:', list\\(m.get\\('providers',{}\\).keys\\(\\)\\)\\)\n\" 2>/dev/null)",
+      "Bash(cat ~/.openclaw/openclaw.json | python3 -c \"\nimport json,sys\nd=json.load\\(sys.stdin\\)\n# Recursively find anything that looks like a token\ndef find\\(obj, path=''\\):\n    if isinstance\\(obj, dict\\):\n        for k,v in obj.items\\(\\):\n            find\\(v, path+'.'+k\\)\n    elif isinstance\\(obj, str\\) and len\\(v:=obj\\) > 20:\n        if 'sk-ant' in v or \\('anthropic' in path.lower\\(\\) and \\('token' in path.lower\\(\\) or 'key' in path.lower\\(\\)\\)\\):\n            print\\(path, '=', 'sk-ant-REDACTED' if 'sk-ant' in v else v[:80]\\)\nfind\\(d\\)\n\" 2>/dev/null)",
+      "Bash(docker exec itops-agents env 2>/dev/null | grep -i \"anthropic\\\\|claude\\\\|api_key\\\\|token\" | sed 's/sk-ant-[^ =]*/sk-ant-REDACTED/g')",
+      "Bash(find /root -maxdepth 5 -name \"*.sh\" 2>/dev/null | xargs grep -l \"token\\\\|rotate\\\\|renew\\\\|refresh\\\\|paste\" 2>/dev/null | grep -v node_modules | grep -v \".git\")"
     ]
   }
 }
