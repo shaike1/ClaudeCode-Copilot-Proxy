@@ -97,6 +97,81 @@ docker compose down             # stop
 > **Tip for remote servers**: If the proxy runs on a remote host (e.g. `100.64.0.7:3002`), set
 > `ANTHROPIC_BASE_URL=http://100.64.0.7:3002` in your Claude Code settings.
 
+
+## ⚡ Quick Launch
+
+### Claude Code (one command)
+
+```bash
+ANTHROPIC_BASE_URL=http://localhost:3002 ANTHROPIC_API_KEY=sk-dummy claude --model claude-sonnet-4-5
+```
+
+> Replace `localhost` with your server IP/hostname if the proxy runs remotely.
+
+Or set it permanently in `~/.claude/settings.json`:
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://localhost:3002",
+    "ANTHROPIC_API_KEY": "sk-dummy"
+  }
+}
+```
+Then just run `claude`.
+
+---
+
+### OpenClaw
+
+**1. Register the provider in `~/.openclaw/agents/main/agent/models.json`:**
+
+```json
+{
+  "providers": {
+    "copilot-proxy": {
+      "api": "anthropic-messages",
+      "baseUrl": "http://localhost:3002",
+      "authProfileKey": "copilot-proxy:default"
+    }
+  },
+  "models": {
+    "copilot-proxy/claude-sonnet-4-5": {
+      "provider": "copilot-proxy",
+      "model": "claude-sonnet-4-5",
+      "contextWindow": 200000
+    }
+  }
+}
+```
+
+**2. Add a dummy auth profile in `~/.openclaw/agents/main/agent/auth-profiles.json`:**
+
+```json
+{
+  "profiles": {
+    "copilot-proxy:default": {
+      "type": "api_key",
+      "provider": "copilot-proxy",
+      "key": "sk-dummy"
+    }
+  }
+}
+```
+
+**3. Set as default model in `~/.openclaw/openclaw.json`:**
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "copilot-proxy/claude-sonnet-4-5"
+      }
+    }
+  }
+}
+```
+
 ## 🤖 Configuration with Claude Code
 
 1. Start the proxy server:
